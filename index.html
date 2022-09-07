@@ -1,216 +1,222 @@
-<html lang="ru_RU"><head>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="icon" href="/assets/images/favicons/favicon.ico">
-  <!-- Begin Jekyll SEO tag v2.7.1 -->
-  <title>Что такое “управление конфигурацией”? | Hexlet Guides</title>
+  <link rel="icon" href="/assets/favicon.ico">
+  <title>What is Deployment?</title>
   <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
 
 <body class="layout-post">
   <!-- Menu Navigation
-    ================================================== -->
-    <!-- Container
       ================================================== -->
-      <main class="container">
-        <div class="row">
-<div class="col-sm-8 mx-auto">
-  <!-- Post Featured Image -->
-
-
-  <h1 class="mb-4">Что такое "управление конфигурацией"?</h1>
-
-  <img src="assets/image.jpeg" class="img-fluid" alt="server">
-
-  <p>Сайты это не только код, но и инфраструктура для их запуска. В первую очередь, в нее входят сервера, на которых крутится код, база данных и различные вспомогательные системы. Иногда все это помещается на один сервер, в более сложных ситуациях количество серверов измеряется тысячами, а для обслуживания таких систем привлекаются целые команды инженеров (разного рода администраторов). Независимо от размера сайта, проблемы обслуживания инфраструктуры у всех очень похожие. Поговорим об одной конкретной – настройке сервера.</p>
-
-<p><em>Существуют подходы, которые позволяют избежать прямого взаимодействия с инфраструктурой. В рамках статьи они не рассматриваются, но знать про них полезно. К ним относятся: классические хостинги с предустановленным софтом, serverless, хостинги статических сайтов, PaaS решения и kubernetes (и его аналоги)</em></p>
-
-<p>В подавляющем большинстве случаев, сервера арендуются у хостинговых компаний, таких как <a href="https://m.do.co/c/e702f9a99145">DigitalOcean</a> или AWS. Делается это за 5 минут нажатием буквально нескольких кнопок. Нас попросят выбрать характеристики сервера, операционную систему и датацентр, в котором он будет развернут. В результате, мы получаем машину (виртуальную), с предустановленной операционной системой и ip-адресом для входа по ssh.</p>
-
-<!-- image: DO -->
-
-<p>Новая машина содержит только основную операционную систему с небольшим набором предустановленных программ. Перед тем как запустить на ней какой-то сервис, например, обычный сайт, понадобится установить дополнительные пакеты. Набор пакетов зависит от стека технологий, на котором он написан. Если сайт “завернут” в Docker, то настройка значительно упрощается и сводится к установке самого Docker. В остальных случаях придется потратить какое-то время на донастройку и конфигурирование. Помимо пакетов, часто требуется настраивать саму систему, менять конфигурационные файлы, права на файлы и директории, создавать пользователей и так далее:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="c"># Как это могло бы быть</span>
-<span class="c"># Сервер на Ubuntu</span>
-
-<span class="c"># Заходим на удаленную машину</span>
-ssh root@ipaddress
-
-<span class="c"># Создание пользователя для деплоя</span>
-<span class="c"># Где-то здесь копируются ssh ключи</span>
-<span class="nb">sudo </span>adduser deploy
-
-<span class="nb">sudo </span>apt <span class="nb">install </span>curl
-<span class="c"># установка Node.js</span>
-curl <span class="nt">-fsSL</span> https://deb.nodesource.com/setup_16.x | <span class="nb">sudo</span> <span class="nt">-E</span> bash -
-<span class="nb">sudo </span>apt <span class="nb">install </span>nodejs
-<span class="c"># установка и настройка Nginx</span>
-<span class="nb">sudo </span>apt <span class="nb">install </span>nginx
-vim /etc/nginx/default.conf
-
-<span class="c"># Формирование структуры директорий для сервиса</span>
-<span class="nb">mkdir</span> <span class="nt">-p</span> /opt/hexlet/versions/
-</code></pre></div></div>
-
-<p>Процесс первоначальной настройки занимает часы и даже дни. Постоянно придется что-то подкручивать, донастраивать и устанавливать. Цикл повториться снова, когда понадобится перейти на новые версии пакетов. Снова придется заходить на сервер, вспоминать что и где настраивалось и как мягко обновиться ничего не сломав. В чем проблема ручной настройки?</p>
-
-<p>Сервера могут умирать и делать это внезапно. Сколько времени уйдет на “раскатку” нового сервера? Практически столько же времени, сколько было потрачено первый раз. Порядок действий и нужные настройки просто никто не вспомнит даже через неделю после настройки, что уже говорить если прошли месяцы. Более того, вдруг тот кто изначально это делал уже не работает в компании или находится в отпуске. Что тогда? Придется долго извиняться перед пользователями за длительный простой и хорошо если бизнес от этого пострадает не сильно.</p>
-
-<p>Переустановка сервера не обязательно связана с какими-то форс-мажорными обстоятельствами. В компаниях с хорошей инженерной культурой, сервера меняются на регулярной основе. Как минимум это важно для безопасности. Операционные системы содержат уязвимости, которые закрываются новыми пакетами или версиями. Следить за этим довольно сложно, поэтому проще регулярно освежать инфраструктуру. С другой стороны, обновление сервера может легко сломать рабочее приложение и вызвать простой в работе. Единственный способ гарантировать беспрерывную работу во время обновления – поднимать рядом еще один сервер и настраивать его. Затем сервис просто выкатывается на новый сервер, а старый выключается.</p>
-
-<h2 id="автоматизация">Автоматизация</h2>
-
-<p>Хорошо бы было автоматизировать настройку сервера. Для этого существует несколько подходов, которые мы рассмотрим ниже.</p>
-
-<h3 id="bash-скрипты">Bash-скрипты</h3>
-
-<p>В простейшем случае для этого достаточно обычного Bash-скрипта, в который последовательно добавляются команды, которые ранее мы запускали руками. Затем все сводится к копированию скрипта на сервер и запуску:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="c"># Копирование на сервер с помощью scp</span>
-scp mybashscript.sh root@ipaddress:~/
-
-<span class="c"># Заходим на сервер и запускаем скрипт</span>
-ssh root@ipaddress
-sh ~/mybashscript.sh
-</code></pre></div></div>
-
-<p>Если перенести команды в bash-скрипт “как есть”, без модификации, то, скорее всего, нам придется постоянно следить за выводом и не забывать подтверждать установку пакетов, так как это поведение по умолчанию:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code>➜  ~ apt <span class="nb">install </span>golang
-The following additional packages will be installed:
-golang-1.13 golang-1.13-doc golang-1.13-go golang-1.13-race-detector-runtime golang-1.13-src golang-doc golang-go
-Need to get 63.5 MB of archives.
-After this operation, 329 MB of additional disk space will be used.
-Do you want to <span class="k">continue</span>? <span class="o">[</span>Y/n] <span class="c"># Скрипт останавливается и ждет ответа</span>
-</code></pre></div></div>
-
-<p>Автоматическое “да” добавляется опцией <code class="language-plaintext highlighter-rouge">-y</code>. У других команд свои опции для подавления взаимодействия с пользователем. Придется их все учесть.</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code>apt <span class="nb">install</span> <span class="nt">-y</span> golang
-</code></pre></div></div>
-
-<p>Другая проблема серьезнее, она связана с понятием “идемпотентность”. Что будет если выполнить команду создания директории два раза?</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="nb">mkdir</span> /hexlet
-<span class="nb">mkdir</span> /hexlet <span class="c"># ?</span>
-</code></pre></div></div>
-
-<p>Команда завершится с ошибкой, она не идемпотентна. То есть последовательные вызовы одной и той же команды приводят к разному результату. Идемпотентность для настройки сервера <a href="https://ru.hexlet.io/blog/posts/pochemu-vazhna-idempotentnost-i-kak-pisat-idempotentnye-bash-skripty">очень важна</a>. Иначе повторный запуск скрипта настройки завершится с ошибкой. А повторные запуски нужны, например в случае отладки самого скрипта, когда мы его только пишем и проверяем как он работает. В случае с командой <code class="language-plaintext highlighter-rouge">mkdir</code> идемпотентности добиться легко, достаточно добавить флаг <code class="language-plaintext highlighter-rouge">-p</code>:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="nb">mkdir</span> <span class="nt">-p</span> /hexlet
-<span class="nb">mkdir</span> <span class="nt">-p</span> /hexlet <span class="c"># ошибки не будет</span>
-</code></pre></div></div>
-
-<p>Но, к сожалению не все команды поддерживают такую возможность. Для многих ситуаций, идемпотентность нужно обеспечивать самостоятельно, что резко усложнит скрипт. Из простого набора команд он превратиться в реальный код с условными конструкциями. И в какой-то момент разбираться в нем станет крайне сложно. Через это проходили многие, особенно раньше, когда не было альтернативы.</p>
-
-<p>Но дело не только в идемпотентности. Часть задач, которые легко делались руками, становятся сложными в автоматизации. Представьте, что для изменения конфигурации нужно поправить конкретную строчку внутри файла. Как это легко сделать с помощью bash? Никак, придется либо полностью заменять файл копируя всего содержимое в bash-скрипт (или рядом с ним), либо использовать, что-то вроде sed для точечной замены строки.</p>
-
-<p>И последнее, но очень важное ограничение. Bash-скрипт нужно доставить на сервер самостоятельно. И если для одного сервера это еще как-то можно автоматизировать, то для нескольких “раскатка” скрипта становится проблемой. Становится важно делать это параллельно иначе настройка растягивается на часы даже в случае полной автоматизации. Добавьте сюда разные сервера со своими скриптами, которые отличаются от других.</p>
-
-<p>На этом этапе bash-скрипты перестают помогать, нужно придумывать что-то еще. Так стали появляться специализированные инструменты для конфигурирования серверов. Одними из первых были проекты Chef и Puppet. Сейчас же, наибольшую популярность приобрел Ansible, который значительно проще в освоении и использовании.</p>
-
-<h2 id="ansible">Ansible</h2>
-
-<p>Система управления конфигурацией (серверов), которая решает все проблемы описанные выше и, даже больше, может использоваться не только для настройки, но и для деплоя, то есть установки и запуска сервиса. Для установки Ansible воспользуйтесь одним из <a href="https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html">предложенных способов</a></p>
-
-<p>В минимальном виде, Ansible конфигурация выглядит как два файла, один – описание серверов, второй – команды, которые мы хотим выполнить. Ansible сам подключается к удаленным серверам и выполняет необходимые команды. Главное дать доступ к этим серверам, например с помощью ssh-ключей.</p>
-
-<p>Описание серверов хранится в файле <em>inventory.ini</em>. Ansible использует его для определения машин, на которые нужно выполнить установку.</p>
-
-<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="c">; адрес машины, которую настраиваем
-; для простоты говорим Ansible использовать локальный компьютер
-</span><span class="err">127.0.0.1</span> <span class="py">ansible_connection</span><span class="p">=</span><span class="s">local</span>
-</code></pre></div></div>
-
-<p>Команды настройки сервера записываются в файлы называемые плейбуками. Плейбуки создаются в формате yaml под любым именем. Например playbook.yaml:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="c1"># hosts – означает группу машин, на которой нужно выполниться</span>
-<span class="c1"># all – означает все описанные в inventory.ini</span>
-<span class="pi">-</span> <span class="na">hosts</span><span class="pi">:</span> <span class="s">all</span>
-<span class="na">tasks</span><span class="pi">:</span> <span class="c1"># набор команд которые нужно выполнить</span>
-  <span class="pi">-</span> <span class="s">ansible.builtin.file</span><span class="pi">:</span> <span class="c1"># file – управляет файлами и директориями</span>
-      <span class="na">name</span><span class="pi">:</span> <span class="s">/tmp/ansible_was_here</span>
-      <span class="na">state</span><span class="pi">:</span> <span class="s">touch</span> <span class="c1"># выполнит команду touch если файла не существует. И – идемпотентность</span>
-</code></pre></div></div>
-
-<p>Файловая структура может выглядеть так:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code>tree <span class="c"># вывод содержимого директории</span>
-<span class="nb">.</span>
-├── inventory.ini
-└── playbook.yaml
-</code></pre></div></div>
-
-<p>Теперь запускаем:</p>
-
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="c"># Запуск Ansible идет на локальной машине!</span>
-<span class="c"># Запускать нужно в той же директории, где созданы файлы</span>
-<span class="c"># -i означает inventory.ini</span>
-<span class="c"># https://github.com/hexlet-boilerplates/ansible</span>
-ansible-playbook <span class="nt">-i</span> inventory.ini playbook.yaml
-
-PLAY <span class="o">[</span>Server Setup] <span class="k">***********************************************************************************************************</span>
-
-TASK <span class="o">[</span>Gathering Facts] <span class="k">********************************************************************************************************</span>
-ok: <span class="o">[</span>127.0.0.1]
-
-TASK <span class="o">[</span>file] <span class="k">*******************************************************************************************************************</span>
-changed: <span class="o">[</span>127.0.0.1]
-
-PLAY RECAP <span class="k">********************************************************************************************************************</span>
-127.0.0.1                  : <span class="nv">ok</span><span class="o">=</span>2    <span class="nv">changed</span><span class="o">=</span>1    <span class="nv">unreachable</span><span class="o">=</span>0    <span class="nv">failed</span><span class="o">=</span>0    <span class="nv">skipped</span><span class="o">=</span>0    <span class="nv">rescued</span><span class="o">=</span>0    <span class="nv">ignored</span><span class="o">=</span>0
-
-</code></pre></div></div>
-
-<p>Вывод говорит о том, что плейбук успешно выполнен. В результате в директории <em>/tmp</em> окажется файл <em>ansible_was_here</em>. Повторный запуск плейбука тоже закончится успешно, но из вывода будет видно, что он не сделает никаких изменений, так как Ansijble сам обеспечивает идемпотентность. В данном случае, он проверит наличие файла и пропустит команду если файл существует. Если в <em>inventory.ini</em> указать несколько ip-адресов, то Ansible выполнит плейбук на каждом из них, причем сделает это параллельно. Единственное о чем нужно не забыть –&nbsp;добавить ssh-ключи на эти машины, иначе Ansible не сможет до них достучаться.</p>
-
-<p>Что из себя представляет плейбук? Главное внутри него – набор задач (tasks), которые мы хотим выполнить. В отличии от bash-скрипта, задачи это не просто bash-команды. На каждую задачу в Ansible встроен модуль для работы с определенной частью системы. Например внутри Ansible есть модули для работы с git, пакетными менеджерами, файлами и тому подобным. Всего их сотни на все случаи жизни. Именно благодаря готовым интеграциям, Ansible знает как работают те или иные части системы, что позволяет добавить нужные проверки для обеспечения идемпотентности. Пара примеров:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="syntax"><code><span class="na">tasks</span><span class="pi">:</span>
-<span class="c1"># Установка postgresql</span>
-<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Ensure postgresql is at the latest version</span>
-  <span class="s">ansible.builtin.apt</span><span class="pi">:</span> <span class="c1"># модуль apt</span>
-    <span class="na">name</span><span class="pi">:</span> <span class="s">postgresql</span>
-    <span class="na">state</span><span class="pi">:</span> <span class="s">latest</span>
-
-<span class="c1"># Запуск postgresql</span>
-<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Ensure that postgresql is started</span>
-  <span class="s">ansible.builtin.service</span><span class="pi">:</span> <span class="c1"># модуль service</span>
-    <span class="na">name</span><span class="pi">:</span> <span class="s">postgresql</span>
-    <span class="na">state</span><span class="pi">:</span> <span class="s">started</span> <span class="c1"># запускаем если не запущен</span>
-</code></pre></div></div>
-
-<p>Как видите, Ansible достаточно прост для начала, при этом у него много возможностей, которые можно изучать по мере погружения и усложнения инфраструктуры.</p>
-
-<h2 id="итого">Итого</h2>
-
-<p>Управление конфигурацией, в современном мире, выполняется с помощью специализированных программ, которые умеют подключаться к удаленным серверам, параллельно настраивать их обеспечивая идемпотентность операций. При таком подходе важно перестать настраивать сервера напрямую. Любые изменения теперь должны делаться через инструмент автоматизации, иначе все вернется к изначальным проблемам. Управление конфигурацией через код повышает взаимозаменяемость людей, позволяет легко отслеживать изменения просто просматривая историю git, подключать других членов команды к управлению инфраструктурой.</p>
-
-<h2 id="дополнительные-ссылки">Дополнительные ссылки</h2>
-
-<ul>
-<li>https://github.com/hexlet-boilerplates/ansible</li>
-</ul>
-
-
-  <div class="lead d-flex my-5">
-    <span class="me-auto">
-      <a href="https://github.com/Hexlet/hexletguides.github.io/tree/master/_posts/2021-06-04-configuration-management.md" target="_blank">
-        Исходный код (github)
-      </a>
-    </span>
-
-      <i>Кирилл Мокевнин</i>
-
-  </div>
-</div>
-</div>
-
-      </main>
-
-      <!-- Footer
-        ================================================== -->
-        <footer class="footer container text-center">
-        </footer>
-</body></html>
+  <!-- Container
+      ================================================== -->
+  <main class="container">
+    <div class="row">
+      <div class="col-md-10 col-lg-8 mx-auto text-break">
+        <div class="mainheading">
+          <h1 class="posttitle"> What is Deployment?
+          </h1>
+        </div>
+        <!-- Post Featured Image -->
+        <div class="text-center mx-auto mb-5">
+          <img class="featured-image text-center mx-auto rounded" src="/assets/deploy.png" alt="Code delivery to the production server
+              ">
+        </div>
+        <!-- End Featured Image -->
+        <div class="article-post">
+          <p>Deployment is the process of web service “deployment”, e.g. of a website, in the operating environment. An
+            operating environment is a place where a website is started and available for requests. This can be
+            ready-made hosting as well as your own server infrastructure.
+          </p>
+          <p><em>Not only web services but also any services available over the network are deployed. Even if this
+              network is internal and not available for requests over the Internet.</em>
+          </p>
+          <p>To understand deployment, you need to understand the code life cycle. The application code is built on the
+            developer’s workstation and run in another place called production. Production is a startup environment
+            (also called a live environment). In the case of a simple application, it may consist of a single server,
+            but for truly complex applications it can be thousands and tens of thousands of servers.
+          </p>
+          <p>How does it work? Developers add the code to the information repository. At some point, they decide it’s
+            time to bring it to production. This can be done on a regular schedule such as every two weeks or just as
+            needed up to the release after each change. In many cases, the number of deployments depends on the
+            automation level, i.e. to which extent the process is easy to conduct and rollback. At Hexlet, deployments
+            are performed almost after each change, approximately three deployments a day.
+          </p>
+          <p>When developers decide now it’s time, they create a release. Release usually refers to a Git tag that marks
+            things to be deployed. Namely, changes added to a master branch after the tag has been created won’t affect
+            the tag itself, which means that we are sure about what we will be deploying.
+          </p>
+          <!-- image -->
+          <p>For static websites or a separate frontend (HTML, CSS, and static files only), deployment comes down to
+            updating the code on the server. In the case of backend deployment, the database is connected at the very
+            least. In general, deployment can be a complicated procedure taking decent time. In distributed systems
+            consisting of many independent web services, there is no regular deployment at all - each part of the
+            application is deployed (released) independently.
+          </p>
+          <p><em>It’s worth mentioning that such PaaS platforms as Heroku take the deployment completely upon
+              themselves. There you just have to make a commit, and then everything will happen by itself. The price for
+              this is the cost of the platform itself.</em>
+          </p>
+          <h2 id="deployment-stages">Deployment stages</h2>
+          <h3 id="code-delivery-to-the-server">Code delivery to the server</h3>
+          <p>There are different options for code delivery to the server, depending on its packaging. Sometimes the code
+            is directly transmitted to the server as a set of files, but more often it’s updated via Git. Back in the
+            day, the deployment method through standard package managers of Linux distributions was popular. It’s still
+            in use today and best suited for certain situations.
+          </p>
+          <ul>
+            <li>Git: <em>git checkout tag-name</em></li>
+            <li>Docker: <em>docker pull image-name:tag-name</em></li>
+            <li>Apt (package): <em>apt-install application-package-name</em></li>
+          </ul>
+          <h3 id="database-update">Database update</h3>
+          <p>In general, a new application version requires changes in the database. To do this, migrations - special
+            scripts containing database update rules - are run during (or before) deployment. For instance, SQL scripts:
+          </p>
+          <div class="language-sql highlighter-rouge">
+            <div class="highlight">
+              <pre class="syntax"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">car</span> <span class="p">(</span>
+                <span class="n">id</span> <span class="nb">INT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+                <span class="n">license_plate</span> <span class="nb">VARCHAR</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+                <span class="n">color</span> <span class="nb">VARCHAR</span> <span class="k">NOT</span> <span class="k">NULL</span>
+              <span class="p">);</span>
+
+              <span class="k">ALTER</span> <span class="k">TABLE</span> <span class="k">owner</span> <span class="k">ADD</span> <span class="n">driver_license_id</span> <span class="nb">VARCHAR</span><span class="p">;</span>
+              </code>
+            </pre>
+            </div>
+          </div>
+          <h3 id="start-and-stop">Start and stop</h3>
+          <p>Somewhere in this process, the old version stops, and the new one starts. If we first stop the old version,
+            then execute migrations and start the new version, we will get service downtime. This is a really common
+            thing for many, but it can be sensitive for business and frequent deployments. So, the most advanced
+            projects don’t stop during deployment. There is a description below of how to do it.
+          </p>
+          <h2 id="automation">Automation</h2>
+          <p>Deployment should be automated as much as possible; Time To Market, a key characteristic of
+            business-oriented applications, depends on it. The faster and more often we deliver changes to the user, the
+            better. The faster we check hypotheses, the faster we introduce changes, and the faster the money invested
+            in development pays its way. Developers are afraid to perform deployment without automation, it becomes a
+            burden that leads to a decrease in deployments and regular stress for the whole team, working long hours.
+          </p>
+          <p>There are three main automation ways:</p>
+          <ol>
+            <li>Using utilities created for specific languages. For example, it’s Capistrano in Ruby, one of the first
+              and best-known utilities of its kind, which has become popular far beyond Ruby. The main problem with such
+              tools is strong binding with the language
+            </li>
+            <li>Using Ansible with an <a
+                href="https://docs.ansible.com/ansible/latest/collections/community/general/deploy_helper_module.html">already
+                built-in module for deployment</a>. It’s relevant for most deployment situations on managed servers
+            </li>
+            <li>Kubernetes-type orchestration systems. If they are used, you can’t do without automated deployment</li>
+          </ol>
+          <p>However, even if automation is executed, the task of “running deployment” remains. The start is also
+            automated. There is a whole approach called <a
+              href="https://en.wikipedia.org/wiki/Continuous_delivery">Continuous Delivery</a>. It’s difficult to
+            implement and is not suitable everywhere, but if it works, you can forget about deployment. It’s performed
+            entirely on its own without human involvement. The main thing in this option is good monitoring and alerting
+            system.
+          </p>
+          <div class="language-yaml highlighter-rouge">
+            <div class="highlight">
+              <pre class="syntax"><code><span class="c1"># https://docs.ansible.com/ansible/latest/collections/community/general/deploy_helper_module.html#examples</span>
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Initialize the deploy root and gather facts</span>
+<span class="na">community.general.deploy_helper</span><span class="pi">:</span>
+  <span class="na">path</span><span class="pi">:</span> <span class="s">/path/to/root</span>
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Clone the project to the new release folder</span>
+<span class="na">ansible.builtin.git</span><span class="pi">:</span>
+  <span class="na">repo</span><span class="pi">:</span> <span class="s">ansible.builtin.git://foosball.example.org/path/to/repo.git</span>
+  <span class="na">dest</span><span class="pi">:</span> <span class="s1">'</span><span class="s">'</span>
+  <span class="na">version</span><span class="pi">:</span> <span class="s">v1.1.1</span>
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Add an unfinished file, to allow cleanup on successful finalize</span>
+<span class="na">ansible.builtin.file</span><span class="pi">:</span>
+  <span class="na">path</span><span class="pi">:</span> <span class="s1">'</span><span class="s">/'</span>
+  <span class="na">state</span><span class="pi">:</span> <span class="s">touch</span>
+</code></pre>
+            </div>
+          </div>
+          <h2 id="zero-downtime-deployment">Zero Downtime Deployment</h2>
+          <p>If no special steps are taken, each deployment will cause the service to stop (possibly partially). At this
+            time users will either see an error or a message that an update is in progress. But this does not happen on
+            most major Internet services. Why? Due to the implementation of the “Zero Downtime Deployment” approach
+            (downtime means service operational downtime).
+          </p>
+          <p>Zero Downtime Deployment is when the service never stops running, but in the meantime, it’s being updated.
+            This is achieved by simultaneously running the old version and the new code. Namely, when an application is
+            deployed, the new version arises next to the old one. And only when the automatics make sure that the new
+            version has started and run, the old version is stopped. The following is required to perform this
+            procedure:
+          </p>
+          <ol>
+            <li>Infrastructure. You need a load balancing to switch traffic (incoming connections from browsers or other
+              systems) between the old and the new version of the code. And it’s desirable to have at least two servers,
+              although it’s not required
+            </li>
+            <li>Deployment. Zero downtime deployment process is much more complicated than the usual one. The easiest
+              way to execute it’s on orchestration systems such as Kubernetes
+            </li>
+            <li>Code culture. It’s impossible to ensure non-stop operation without a certain culture of code writing.
+              For the old and the new version to work simultaneously, you need to keep an eye on all interfaces. It’s
+              important to maintain backward compatibility (working with API, database, queues, and, in general, with
+              any storage)
+            </li>
+            <li>Database. It should be backward compatible between the old and the new versions. All migrations are
+              forward-only (you can’t undo them!) and for addition only. You can’t delete and update (rename, change the
+              type of) columns and tables
+            </li>
+          </ol>
+          <div class="language-yaml highlighter-rouge">
+            <div class="highlight">
+              <pre class="syntax"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">extensions/v1beta1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
+<span class="na">metadata</span><span class="pi">:</span>
+<span class="na">name</span><span class="pi">:</span> <span class="s">tomcat-deployment-${TARGET_ROLE}</span>
+<span class="na">spec</span><span class="pi">:</span>
+<span class="na">replicas</span><span class="pi">:</span> <span class="m">2</span>
+<span class="na">template</span><span class="pi">:</span>
+  <span class="na">metadata</span><span class="pi">:</span>
+    <span class="na">labels</span><span class="pi">:</span>
+      <span class="na">app</span><span class="pi">:</span> <span class="s">tomcat</span>
+      <span class="na">role</span><span class="pi">:</span> <span class="s">${TARGET_ROLE}</span>
+  <span class="na">spec</span><span class="pi">:</span>
+    <span class="na">containers</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">tomcat-container</span>
+      <span class="na">image</span><span class="pi">:</span> <span class="s">tomcat:${TOMCAT_VERSION}</span>
+      <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">containerPort</span><span class="pi">:</span> <span class="m">8080</span>
+      <span class="na">readinessProbe</span><span class="pi">:</span>
+        <span class="na">httpGet</span><span class="pi">:</span>
+          <span class="na">path</span><span class="pi">:</span> <span class="s">/</span>
+          <span class="na">port</span><span class="pi">:</span> <span class="m">8080</span>
+</code></pre>
+            </div>
+          </div>
+          <h2 id="links">Links</h2>
+          <ul>
+            <li><a
+                href="https://docs.ansible.com/ansible/latest/collections/community/general/deploy_helper_module.html">Ansible
+                Deploy</a>
+            </li>
+          </ul>
+        </div>
+        <div class="lead d-flex my-5">
+          <span class="me-auto">
+            <a href="https://github.com/Hexlet/hexletguides.github.io/tree/main/_i18n/en/_posts/2022-03-29-deploy.md"
+              target="_blank">
+              Source code (github)
+            </a>
+          </span>
+          <div class="fst-italic">Kirill Mokevnin</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer container text-center">
+  </footer>
+</body>
+</html>
